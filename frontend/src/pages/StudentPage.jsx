@@ -4,7 +4,7 @@ import { usePollTimer } from "../hooks/usePollTimer";
 import { submitVote } from "../api/voteApi";
 import { getSessionId } from "../utils/session";
 import { useEffect, useState } from "react";
-
+import "./StudentPage.css"; // Added styling import
 
 function StudentPage() {
     const [selectedOption, setSelectedOption] = useState(null);
@@ -19,14 +19,13 @@ function StudentPage() {
     const timeLeft = usePollTimer(remainingSeconds);
     const uiPollEnded = pollEnded || timeLeft === 0;
 
-
     useEffect(() => {
         setSelectedOption(null);
         setHasVoted(false);
     }, [poll?._id]);    
 
     if(loading) return (
-        <div className="page" style={{ textAlign: "center" }}>
+        <div className="page loading-state">
             <div className="badge">
                 <span>Intervue Poll</span>
             </div>
@@ -34,82 +33,92 @@ function StudentPage() {
             <p className="waiting-text">Wait for the teacher to ask questions..</p>
         </div>
     )
-    if(uiPollEnded || timeLeft === 0) {
-    return (
-      <div className="page">
-        <h2>Question</h2>
-        {poll && <div className="question-bar">{poll.question}</div>}
 
-        {results && results.totalVotes > 0 && poll?.options && (
-          <div style={{marginTop: "20px"}}>
-            <h4>Final Results</h4>
-            {poll.options.map((opt, idx) => {
-              const result = results.results.find(r => r.optionId === opt.optionId);
-              const percentage = result?.percentage || 0;
-              return (
-                <div key={opt.optionId} className="poll-option-result">
-                  <div style={{ width: `${percentage}%` }} className="progress-bar-container"></div>
-                  <div className="progress-bar-content">
-                    <div className="option-number">{idx + 1}</div>
-                    <div className="option-text">{opt.text}</div>
-                    <div className="option-percentage">{percentage}%</div>
+    if (uiPollEnded || timeLeft === 0) {
+  return (
+    <div className="page result-view">
+      <div className="badge success-badge">
+        <span>Poll Finished</span>
+      </div>
+      
+      <h2 className="section-title">Final Standings</h2>
+      
+      {poll && (
+        <div className="question-bar ended-q">
+          <span className="q-label">Question:</span>
+          {poll.question}
+        </div>
+      )}
+
+      {results && results.totalVotes > 0 ? (
+        <div className="results-container animate-in">
+          <div className="results-header">
+            <h4>Results Summary</h4>
+            <span className="total-votes">{results.totalVotes} votes cast</span>
+          </div>
+
+          {/* Unified Result Logic: Works with or without poll.options */}
+          {(poll?.options || results.results).map((item, idx) => {
+            const optId = item.optionId;
+            const optText = item.text || `Option ${optId}`;
+            const result = results.results.find(r => r.optionId === optId);
+            const percentage = result?.percentage || 0;
+            const count = result?.count || 0;
+
+            return (
+              <div key={optId} className="poll-option-result final-result">
+                <div 
+                  className="progress-bar-container" 
+                  style={{ width: `${percentage}%` }}
+                ></div>
+                <div className="progress-bar-content">
+                  <div className="option-number">{idx + 1}</div>
+                  <div className="option-text">{optText}</div>
+                  <div className="option-percentage">
+                    <strong>{percentage}%</strong>
+                    <span className="vote-count">({count})</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="no-results-card">
+          <p>No votes were submitted for this poll.</p>
+        </div>
+      )}
 
-        {results && results.totalVotes > 0 && !poll?.options && (
-          <div style={{marginTop: "20px"}}>
-            <h4>Final Results</h4>
-            <ul className="results">
-              {results.results.map((r) => (
-                <li key={r.optionId}>
-                  {r.optionId}: {r.percentage}% ({r.count})
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <p style={{marginTop: "20px", textAlign: "center", color: "#6E6E6E"}}>
-          Wait for the teacher to ask a new question..
+      <div className="footer-status">
+        <div className="loading-spinner-small"></div>
+        <p className="footer-wait-text">
+          Waiting for the teacher to start a new question...
         </p>
       </div>
-    )
-  }
+    </div>
+  );
+}
 
   if(!poll) {
     if(!hasStarted) {
       return (
-        <div className="page" style={{ textAlign: "center", maxWidth: "600px" }}>
-          <div className="badge">
-            <span>Intervue Poll</span>
-          </div>
+        <div className="page entry-page">
           
           <h1 className="welcome-title">Let's Get Started</h1>
           <p className="welcome-description">
             If you're a student, you'll be able to <strong>submit your answers</strong>, participate in live polls, and see how your responses compare with your classmates
           </p>
 
-          <div style={{ marginTop: "32px", textAlign: "left", maxWidth: "400px", marginLeft: "auto", marginRight: "auto" }}>
-            <label style={{ display: "block", fontWeight: 600, fontSize: "16px", marginBottom: "8px", color: "#373737" }}>
+          <div className="input-group">
+            <label className="input-label">
               Enter your Name
             </label>
             <input 
               type="text"
-              placeholder="Enter your name"
+              placeholder="e.g. John Doe"
+              className="modern-input"
               value={studentName}
               onChange={(e) => setStudentName(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "12px",
-                borderRadius: "8px",
-                border: "1px solid #ddd",
-                fontSize: "14px",
-                backgroundColor: "#f5f5f5"
-              }}
             />
           </div>
 
@@ -118,7 +127,6 @@ function StudentPage() {
             onClick={() => {
               setHasStarted(true);
             }}
-            style={{ marginTop: "32px" }}
           >
             Continue
           </button>
@@ -127,7 +135,7 @@ function StudentPage() {
     }
     
     return (
-      <div className="page" style={{ textAlign: "center" }}>
+      <div className="page waiting-state">
         <div className="badge">
           <span>Intervue Poll</span>
         </div>
@@ -143,50 +151,19 @@ function StudentPage() {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  if(timeLeft <= 0) {
-    return (
-      <div className="page">
-        <h2>Question</h2>
-        <div className="question-bar">{poll.question}</div>
-
-        {results && results.totalVotes > 0 && poll?.options && (
-          <div style={{marginTop: "20px"}}>
-            <h4>Final Results</h4>
-            {poll.options.map((opt, idx) => {
-              const result = results.results.find(r => r.optionId === opt.optionId);
-              const percentage = result?.percentage || 0;
-              return (
-                <div key={opt.optionId} className="poll-option-result">
-                  <div style={{ width: `${percentage}%` }} className="progress-bar-container"></div>
-                  <div className="progress-bar-content">
-                    <div className="option-number">{idx + 1}</div>
-                    <div className="option-text">{opt.text}</div>
-                    <div className="option-percentage">{percentage}%</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <p style={{marginTop: "20px", textAlign: "center", color: "#6E6E6E"}}>
-          Wait for the teacher to ask a new question..
-        </p>
-      </div>
-    );
-  }
-
   return(
-    <div className="page">
+    <div className="page active-poll">
       <div className="question-header">
-        <h2>Question 1</h2>
-        <div className="timer">{formatTime(timeLeft)}</div>
+        <h2 className="live-badge">Live Poll</h2>
+        <div className={`timer ${timeLeft < 10 ? 'timer-low' : ''}`}>
+            {formatTime(timeLeft)}
+        </div>
       </div>
 
-      <div className="question-bar">{poll.question}</div>
+      <div className="question-bar active-q">{poll.question}</div>
 
         {!hasVoted && Array.isArray(poll.options) && (
-          <div>
+          <div className="options-grid">
             {poll.options.map((opt, idx) => (
               <div
                 key={opt.optionId}
@@ -203,7 +180,7 @@ function StudentPage() {
       {errorMessage && (
         <div className="error-message">
           <span>{errorMessage}</span>
-          <button onClick={() => setErrorMessage(null)}>×</button>
+          <button className="error-close" onClick={() => setErrorMessage(null)}>×</button>
         </div>
       )}
 
@@ -229,13 +206,13 @@ function StudentPage() {
               setTimeout(() => setErrorMessage(null), 5000);
             }
           }}
-          >Submit</button>
+          >Submit Vote</button>
         </div>
       )}
 
       {results && results.totalVotes > 0 && results.results.length > 0 && (
-        <div style={{marginTop: "20px"}}>
-          <h4>Live Results</h4>
+        <div className="live-results-section">
+          <h4 className="results-heading">Current Live Results</h4>
           {poll.options && results.results.map((r) => {
             const opt = poll.options.find(o => o.optionId === r.optionId);
             const idx = poll.options.findIndex(o => o.optionId === r.optionId);
