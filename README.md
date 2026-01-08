@@ -1,6 +1,4 @@
-# Live Polling System – Intervue.io Assignment
-
-A real-time, resilient live polling system built as part of the Intervue.io SDE Intern assignment.
+# Resilient Real-Time Live Polling System
 
 The system supports two roles — **Teacher** and **Student** — and ensures real-time updates, state recovery, and data integrity using Socket.io and a persistent database.
 
